@@ -1,0 +1,472 @@
+<!doctype html>
+<!--
+  ===========================================================================
+  QUINIELA LIGUILLA  —  página (la base de datos es tu Google Sheet)
+  ---------------------------------------------------------------------------
+  ANTES de subirla: pega abajo la URL de tu aplicación web de Apps Script
+  (la que termina en /exec) donde dice "PEGA_AQUI_TU_URL".
+  Luego sube este .html como index.html a GitHub Pages / Netlify / Cloudflare.
+  Pasos del backend: ver el archivo Codigo-quiniela.gs
+  ===========================================================================
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiniela Liguilla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c1512; --card:#15231d; --card2:#1a2c24; --line:#27392f;
+    --ink:#edeee4; --muted:#9bb0a4;
+    --gold:#f2b01e; --gold-dim:#caa12e; --grass:#22b364; --amber:#f2a91e; --red:#e8503a;
+    --r:14px; --maxw:640px; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:radial-gradient(120% 80% at 50% -10%, #16271f 0%, var(--bg) 55%, var(--bg) 100%);
+    color:var(--ink);font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px 64px}
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#10201a,#0e1814)}
+  .hero-inner{max-width:var(--maxw);margin:0 auto;padding:26px 16px 20px;position:relative;z-index:2}
+  .pitch{position:absolute;inset:0;z-index:1;opacity:.16;pointer-events:none}
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--grass);box-shadow:0 0 10px var(--grass)}
+  h1.title{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(30px,8vw,46px);line-height:.95;margin:2px 0 10px}
+  .sub{color:var(--muted);font-size:13.5px;max-width:50ch}
+  .share{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .banner{background:#2a1d07;border:1px solid #5a4413;color:#f3d692;border-radius:12px;padding:13px 15px;margin:16px 0;font-size:13.5px;line-height:1.55}
+  .banner b{color:#ffe6a8} .banner code{background:#1a1405;border:1px solid #4a3a12;border-radius:6px;padding:1px 6px;color:#ffe0a0}
+  .tabs{display:flex;gap:6px;position:sticky;top:0;z-index:20;background:rgba(12,21,18,.92);backdrop-filter:blur(8px);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .tab{flex:1;border:1px solid var(--line);background:var(--card);color:var(--muted);font:600 13.5px Inter,sans-serif;padding:11px 8px;border-radius:11px;cursor:pointer;transition:.15s;text-align:center}
+  .tab[aria-selected="true"]{background:var(--gold);color:#1a1405;border-color:var(--gold);box-shadow:0 4px 16px rgba(242,176,30,.25)}
+  .tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .btn{font:700 14px Inter,sans-serif;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--ink);padding:11px 14px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--gold-dim)} .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .btn.gold{background:var(--gold);color:#1a1405;border-color:var(--gold)} .btn.gold:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent} .btn.danger{background:transparent;border-color:#5b2a26;color:#ef7f70} .btn.danger:hover{background:#2a1512}
+  .btn.sm{padding:7px 11px;font-size:12.5px;border-radius:9px}
+  input,select{font:500 15px Inter,sans-serif;color:var(--ink);background:#0e1814;border:1px solid var(--line);border-radius:11px;padding:12px 13px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
+  label.fld{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 6px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:0}
+  .note{color:var(--muted);font-size:13px}
+  .empty{border:1px dashed var(--line);border-radius:var(--r);padding:30px 18px;text-align:center;color:var(--muted);background:rgba(255,255,255,.015)}
+  .empty b{color:var(--ink);display:block;font-size:15px;margin-bottom:4px}
+  .namebar{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:8px}
+  .scoring{font-size:12.5px;color:var(--muted);margin:0 2px 16px;display:flex;gap:14px;flex-wrap:wrap}
+  .scoring span{display:inline-flex;align-items:center;gap:6px}
+  .chip{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .round{margin:22px 0 12px;display:flex;align-items:center;gap:12px}
+  .round h2{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:19px;letter-spacing:.04em;margin:0}
+  .round .line{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  .serie{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .serie-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .serie-teams{font-family:"Anton",sans-serif;text-transform:uppercase;font-size:clamp(15px,4.6vw,20px);letter-spacing:.02em}
+  .serie-teams .vs{color:var(--muted);font-size:13px;margin:0 4px}
+  .leg{margin-top:14px}
+  .leg-label{font:800 11px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .leg-label .pt{color:var(--muted);font-weight:700;letter-spacing:.04em}
+  .legteams{display:flex;justify-content:space-between;font-family:"Anton",sans-serif;text-transform:uppercase;font-size:12.5px;letter-spacing:.02em;margin:0 4px 2px}
+  .legteams .aw{color:var(--muted)}
+  .scoreline{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
+  .scorein{width:74px;flex:0 0 auto;text-align:center;font-family:"Anton",sans-serif;font-size:26px;color:var(--gold);background:#0e1814;border:1px solid var(--line);border-radius:11px;padding:8px 4px}
+  .scorein:focus{border-color:var(--gold);outline:none}
+  .dash{color:var(--muted);font-weight:800;font-size:18px}
+  .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#0e1814}
+  .st-btn{width:44px;height:48px;border:none;background:#16241e;color:var(--ink);font:800 22px Inter;cursor:pointer;transition:.12s;line-height:1}
+  .st-btn:hover:not(:disabled){background:#1d3027;color:var(--gold)}
+  .st-btn:disabled{opacity:.4;cursor:default}
+  .st-val{min-width:44px;text-align:center;font-family:"Anton",sans-serif;font-size:24px;color:var(--gold)}
+  .st-val.empty{color:#496055}
+  .legres{margin-top:9px;font-size:12.5px;color:var(--muted);text-align:center}
+  .advance{margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+  .adv-q{font:800 11px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between} .adv-q .pt{color:var(--muted);font-weight:700}
+  .adv-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .adv{border:1.5px solid var(--line);background:#0e1814;color:var(--ink);border-radius:10px;padding:13px 8px;cursor:pointer;font:700 14px Inter;transition:.13s}
+  .adv:hover:not(:disabled){border-color:#3c5749} .adv[data-on="1"]{background:rgba(242,176,30,.16);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .adv:disabled{cursor:default;opacity:.92} .adv.win{outline:2px dashed var(--grass)}
+  .feedback{margin-top:11px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px}
+  .ok{color:var(--grass);font-weight:700}.bad{color:var(--red);font-weight:700}
+  .champ{background:linear-gradient(180deg,#241a06,#171103);border:1px solid #5a4413;border-radius:var(--r);padding:15px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .champ-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .champ-badge{font:800 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:7px}
+  .champ-pt{font:800 11px Inter;color:#1a1405;background:var(--gold);padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .champ-q{font-family:"Anton",sans-serif;text-transform:uppercase;font-size:18px;margin:6px 0 12px}
+  .champ-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .champ-opt{border:1.5px solid #4a3a12;background:#0e1814;color:var(--ink);border-radius:10px;padding:12px 8px;cursor:pointer;font:600 13.5px Inter;transition:.13s;text-align:center}
+  .champ-opt:hover:not(:disabled){border-color:var(--gold-dim)}
+  .champ-opt[data-on="1"]{background:rgba(242,176,30,.18);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;font-weight:700}
+  .champ-opt:disabled{cursor:default;opacity:.92}
+  .champ-opt.win{outline:2px dashed var(--grass)}
+  .lead{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .lrow{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line)}
+  .lrow:last-child{border-bottom:none}
+  .lrow.head{background:#101b16;color:var(--muted);font:700 11px Inter;text-transform:uppercase;letter-spacing:.08em}
+  .rank{font-family:"Anton",sans-serif;font-size:20px;color:var(--muted);text-align:center}
+  .rank.m1{color:var(--gold)}.rank.m2{color:#cfd8d2}.rank.m3{color:#d08a4e}
+  .pname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pscore{font-family:"Anton",sans-serif;font-size:22px;color:var(--gold);text-align:right;min-width:30px}
+  .phit{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+  .panel h3{margin:0 0 12px;font-size:15px}
+  .adminserie{padding:12px;border:1px solid var(--line);border-radius:11px;background:#0e1814;margin-bottom:10px}
+  .adminserie .am-t{font-weight:700;font-size:14px;margin-bottom:8px}
+  .am-leg{margin:8px 0}.am-leg .l{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+  .scorerow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .scoreinp{width:60px;flex:0 0 auto;text-align:center;padding:9px 6px}
+  .st-team{font-size:12px;color:var(--muted);font-weight:600}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}.seg .btn{flex:0 0 auto}
+  .seg .btn[data-active="1"][data-k="A"]{background:var(--grass);border-color:var(--grass);color:#06170d}
+  .seg .btn[data-active="1"][data-k="B"]{background:var(--red);border-color:var(--red);color:#fff}
+  .lockpill{font:700 10.5px Inter;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px;align-self:center}
+  .editbox{margin-top:8px;padding-top:10px;border-top:1px dashed var(--line)}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--gold);color:#1a1405;font-weight:700;padding:11px 18px;border-radius:11px;box-shadow:var(--shadow);opacity:0;transition:.25s;z-index:50;font-size:14px;pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="hero">
+  <svg class="pitch" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="none" stroke="#2f9c5f" stroke-width="1.4">
+      <rect x="8" y="8" width="624" height="184"/><line x1="320" y1="8" x2="320" y2="192"/>
+      <circle cx="320" cy="100" r="42"/><rect x="8" y="46" width="78" height="108"/>
+      <rect x="554" y="46" width="78" height="108"/><rect x="8" y="74" width="34" height="52"/><rect x="598" y="74" width="34" height="52"/>
+    </g>
+  </svg>
+  <div class="hero-inner">
+    <div class="eyebrow"><span class="dot"></span> Liguilla · Futbol Mexicano</div>
+    <h1 class="title" id="heroTitle">Quiniela Liguilla</h1>
+    <p class="sub">Marcador exacto de cada partido, quién avanza y el campeón. La tabla se actualiza para todos.</p>
+    <div class="share"><button class="btn sm gold" type="button" id="copyLink">Copiar enlace</button><span class="note" id="copyHint"></span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="cfgBanner"></div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-pred" aria-selected="true" type="button">Pronósticos</button>
+    <button class="tab" role="tab" id="t-tabla" aria-selected="false" type="button">Tabla</button>
+    <button class="tab" role="tab" id="t-org" aria-selected="false" type="button">Organizador</button>
+  </div>
+  <section id="view-pred"></section>
+  <section id="view-tabla" class="hidden"></section>
+  <section id="view-org" class="hidden"></section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   PEGA AQUÍ la URL de tu aplicación web de Apps Script (termina en /exec)
+   ========================================================================= */
+const API = "https://script.google.com/macros/s/AKfycbyE9XJo7ZXQDduh-KZ52GDMeJKAiKeKgoZJzRBxZAkkPkoiPvr7AdaRfIwKcsy7qTRq/exec";
+/* ========================================================================= */
+
+const PLACEHOLDER = !API || API.indexOf("PEGA_AQUI") === 0;
+const PTS_AVANZA = 2;
+const ROUNDS = [{id:'cuartos',label:'Cuartos de Final'},{id:'semis',label:'Semifinal'},{id:'final',label:'Final'}];
+const DEFAULTS = [
+  {id:'c1',round:'cuartos',order:1,teamA:'Pumas',teamB:'América'},
+  {id:'c2',round:'cuartos',order:2,teamA:'Guadalajara',teamB:'Tigres'},
+  {id:'c3',round:'cuartos',order:3,teamA:'Cruz Azul',teamB:'Atlas'},
+  {id:'c4',round:'cuartos',order:4,teamA:'Pachuca',teamB:'Toluca'},
+];
+function fullSerie(s){return{id:s.id,round:s.round,order:s.order,teamA:s.teamA,teamB:s.teamB,idaHome:s.teamB,idaAway:s.teamA,vueltaHome:s.teamA,vueltaAway:s.teamB,idaScoreH:null,idaScoreA:null,vueltaScoreH:null,vueltaScoreA:null,advances:null,locked:false};}
+
+let config={title:'Quiniela Liguilla',setup:false,pwHash:'',seeded:false,champion:'',champLocked:false,bonusCampeon:5};
+let seriesArr=[], predsArr=[];
+let currentName='', myPicks={}, isOrganizer=false, orgPw='', activeTab='pred', editId=null, pollTimer=null;
+
+const $=s=>document.querySelector(s);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function resultOf(h,a){if(h==null||a==null)return null;return h>a?'L':h<a?'V':'E';}
+function legActual(s,w){return w==='ida'?{h:s.idaScoreH,a:s.idaScoreA}:{h:s.vueltaScoreH,a:s.vueltaScoreA};}
+function legHasResult(s,w){const x=legActual(s,w);return x.h!=null&&x.a!=null;}
+const closedSerie=s=>s.locked===true||(legHasResult(s,'ida')&&legHasResult(s,'vuelta'));
+function legPoints(pred,act){if(!pred||pred.h==null||pred.a==null||act.h==null||act.a==null)return 0;if(pred.h===act.h&&pred.a===act.a)return 2;if(resultOf(pred.h,pred.a)===resultOf(act.h,act.a))return 1;return 0;}
+async function sha256(str){const d=new TextEncoder().encode(str);const b=await crypto.subtle.digest('SHA-256',d);return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function nameKey(n){const s=(n||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');return s||'anon';}
+function applyTitle(){const t=config.title||'Quiniela Liguilla';$('#heroTitle').textContent=t;document.title=t;}
+function renderActive(){if(activeTab==='pred')renderPred();else if(activeTab==='tabla')renderTabla();else renderOrg();}
+
+/* ---------- API (Google Sheets vía Apps Script) ---------- */
+async function apiGet(){const r=await fetch(API,{method:'GET',redirect:'follow'});return await r.json();}
+async function apiPost(payload){const r=await fetch(API,{method:'POST',redirect:'follow',body:JSON.stringify(payload)});try{return await r.json();}catch(e){return{ok:true};}}
+
+async function refreshAll(){
+  if(PLACEHOLDER){ seriesArr=DEFAULTS.map(fullSerie); applyTitle(); renderActive(); return; }
+  try{
+    const data=await apiGet();
+    if(data.config) config={...config,...data.config};
+    seriesArr=(data.series||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)||a.id.localeCompare(b.id));
+    predsArr=data.preds||[];
+    if(currentName){const me=predsArr.find(p=>p.nameKey===nameKey(currentName));myPicks=me?me.picks:{};}
+    applyTitle(); renderActive();
+  }catch(e){console.error(e);toast('No se pudo conectar con la hoja');}
+}
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  activeTab=t;
+  $('#t-pred').setAttribute('aria-selected',t==='pred');
+  $('#t-tabla').setAttribute('aria-selected',t==='tabla');
+  $('#t-org').setAttribute('aria-selected',t==='org');
+  $('#view-pred').classList.toggle('hidden',t!=='pred');
+  $('#view-tabla').classList.toggle('hidden',t!=='tabla');
+  $('#view-org').classList.toggle('hidden',t!=='org');
+  clearInterval(pollTimer); pollTimer=null;
+  renderActive();
+  if(!PLACEHOLDER && (t==='tabla'||t==='pred')) refreshAll();
+  if(!PLACEHOLDER && t==='tabla') pollTimer=setInterval(refreshAll,20000);
+}
+$('#t-pred').onclick=()=>setTab('pred');
+$('#t-tabla').onclick=()=>setTab('tabla');
+$('#t-org').onclick=()=>setTab('org');
+$('#copyLink').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);$('#copyHint').textContent='¡Copiado! Compártelo.';}catch(e){$('#copyHint').textContent='Copia el enlace del navegador.';}setTimeout(()=>$('#copyHint').textContent='',3500);};
+
+function showBanner(){
+  const b=$('#cfgBanner');
+  if(PLACEHOLDER){b.innerHTML=`<div class="banner"><b>Modo vista previa.</b> Para que guarde y comparta los pronósticos, pega la URL de tu aplicación web de Google Apps Script donde dice <code>PEGA_AQUI_TU_URL</code> y sube el archivo a tu hosting. Por ahora no se guarda nada.</div>`;}
+  else{b.innerHTML='';}
+}
+
+/* ---------- guardar pronóstico ---------- */
+async function persistPicks(){
+  if(PLACEHOLDER){toast('Conecta tu hoja para guardar');return;}
+  const res=await apiPost({route:'savePrediction',name:currentName,picks:myPicks});
+  if(res&&res.ok===false)toast('No se pudo guardar');
+}
+async function setScoreInput(serieId,leg,side,raw){
+  if(!currentName){toast('Escribe tu nombre primero');$('#nameInp')&&$('#nameInp').focus();return;}
+  myPicks[serieId]=myPicks[serieId]||{};
+  const cur=myPicks[serieId][leg]||{h:null,a:null};
+  const val=String(raw).trim()===''?null:Math.max(0,Math.min(30,parseInt(raw,10)||0));
+  const next={h:cur.h,a:cur.a}; next[side]=val;
+  myPicks[serieId][leg]=next;
+  persistPicks();
+}
+async function savePick(serieId,field,val){
+  if(!currentName){toast('Escribe tu nombre primero');$('#nameInp')&&$('#nameInp').focus();return false;}
+  myPicks[serieId]=myPicks[serieId]||{}; myPicks[serieId][field]=val;
+  if(PLACEHOLDER){toast('Conecta tu hoja para guardar');return true;}
+  const res=await apiPost({route:'savePrediction',name:currentName,picks:myPicks});
+  if(res&&res.ok===false)toast('No se pudo guardar');
+  return true;
+}
+async function saveChampion(team){
+  if(!currentName){toast('Escribe tu nombre primero');$('#nameInp')&&$('#nameInp').focus();return false;}
+  myPicks['__campeon']=team;
+  if(PLACEHOLDER){toast('Conecta tu hoja para guardar');return true;}
+  const res=await apiPost({route:'savePrediction',name:currentName,picks:myPicks});
+  if(res&&res.ok===false)toast('No se pudo guardar');
+  return true;
+}
+function champTeams(){
+  const cu=seriesArr.filter(s=>s.round==='cuartos'); const src=cu.length?cu:seriesArr; const out=[];
+  src.forEach(s=>{if(s.teamA&&out.indexOf(s.teamA)<0)out.push(s.teamA);if(s.teamB&&out.indexOf(s.teamB)<0)out.push(s.teamB);});
+  return out;
+}
+function championCard(){
+  const teams=champTeams(); if(!teams.length) return '';
+  const locked=config.champLocked===true, mine=myPicks['__campeon']||null, bonus=Number(config.bonusCampeon)||5;
+  const opts=teams.map(t=>{const on=mine===t?'1':'0';const win=(config.champion&&config.champion===t)?' win':'';
+    return `<button type="button" class="champ-opt${win}" data-on="${on}" data-champ="${esc(t)}" ${locked?'disabled':''}>${esc(t)}</button>`;}).join('');
+  let fb='';
+  if(config.champion){fb=`<div class="feedback"><span>Campeón: <b>${esc(config.champion)}</b> ${mine?(mine===config.champion?'<span class="ok">✓ +'+bonus+'</span>':'<span class="bad">✗</span>'):'(no elegiste)'}</span></div>`;}
+  else if(locked){fb=`<div class="feedback"><span>Pronóstico de campeón cerrado.</span></div>`;}
+  return `<div class="champ"><div class="champ-head"><span class="champ-badge">🏆 Bono del campeón</span><span class="champ-pt">+${bonus} pts</span></div>
+    <div class="champ-q">¿Quién levanta el título?</div><div class="champ-grid">${opts}</div>${fb}</div>`;
+}
+
+/* ---------- PRONÓSTICOS ---------- */
+function legHtml(s,which){
+  const home=which==='ida'?s.idaHome:s.vueltaHome, away=which==='ida'?s.idaAway:s.vueltaAway;
+  const closed=closedSerie(s);
+  const pred=(myPicks[s.id]||{})[which]||null;
+  const act=legActual(s,which); const hasRes=legHasResult(s,which);
+  const valH=pred&&pred.h!=null?pred.h:null, valA=pred&&pred.a!=null?pred.a:null;
+  const inp=(side,val)=>`<input class="scorein" type="number" min="0" inputmode="numeric" placeholder="·" data-s="${s.id}" data-f="${which}" data-side="${side}" value="${val==null?'':val}" ${closed?'disabled':''}>`;
+  let res='';
+  if(hasRes){
+    const p=legPoints(pred,act);
+    const tag=p===2?`<span class="ok">marcador exacto +2</span>`:p===1?`<span class="ok">resultado +1</span>`:`<span class="bad">+0</span>`;
+    const mine=pred&&pred.h!=null?`tú: ${pred.h}–${pred.a}`:'sin pronóstico';
+    res=`<div class="legres">Final: <b>${act.h}–${act.a}</b> · ${esc(mine)} · ${tag}</div>`;
+  }
+  return `<div class="leg"><div class="leg-label">${which==='ida'?'Ida':'Vuelta'} <span class="pt">· 2 exacto / 1 resultado</span></div>
+    <div class="legteams"><span>${esc(home)}</span><span class="aw">${esc(away)}</span></div>
+    <div class="scoreline">${inp('h',valH)}<span class="dash">–</span>${inp('a',valA)}</div>${res}</div>`;
+}
+function serieCard(s){
+  const closed=closedSerie(s), mine=myPicks[s.id]||{};
+  const advBtn=team=>{const on=mine.advance===team?'1':'0';const win=(s.advances!=null&&s.advances===team)?' win':'';const name=team==='A'?s.teamA:s.teamB;
+    return `<button type="button" class="adv${win}" data-on="${on}" data-adv="${team}" data-s="${s.id}" ${closed?'disabled':''}>${esc(name)}</button>`;};
+  let advfb='';
+  if(s.advances!=null){advfb=`<div class="feedback"><span>Avanza: <b>${esc(s.advances==='A'?s.teamA:s.teamB)}</b> ${mine.advance?(mine.advance===s.advances?'<span class="ok">✓ +'+PTS_AVANZA+'</span>':'<span class="bad">✗</span>'):'(no elegiste)'}</span></div>`;}
+  return `<div class="serie"><div class="serie-head"><div class="serie-teams">${esc(s.teamA)}<span class="vs">vs</span>${esc(s.teamB)}</div></div>
+    ${legHtml(s,'ida')}${legHtml(s,'vuelta')}
+    <div class="advance"><div class="adv-q"><span>¿Quién avanza?</span><span class="pt">${PTS_AVANZA} pts</span></div><div class="adv-opts">${advBtn('A')}${advBtn('B')}</div></div>${advfb}</div>`;
+}
+function renderPred(){
+  const v=$('#view-pred'); const wasName=document.activeElement&&document.activeElement.id==='nameInp';
+  const bonus=Number(config.bonusCampeon)||5;
+  let html=`<div class="namebar"><label class="fld" for="nameInp">Tu nombre</label>
+    <input id="nameInp" placeholder="Escribe tu nombre para guardar tus pronósticos" value="${esc(currentName)}" autocomplete="off">
+    <p class="note" style="margin:8px 0 0">${currentName?'Tus pronósticos se guardan solos al marcar.':'Pon tu nombre para empezar.'}</p></div>
+    <div class="scoring"><span><i class="chip" style="background:var(--grass)"></i> 2 marcador exacto · 1 resultado</span><span><i class="chip" style="background:var(--amber)"></i> ${PTS_AVANZA} por quién avanza</span><span><i class="chip" style="background:var(--gold)"></i> +${bonus} por el campeón</span></div>`;
+  html+=championCard();
+  if(seriesArr.length===0){html+=`<div class="empty"><b>Aún no hay series</b>El organizador todavía no carga los partidos.</div>`;}
+  else{for(const r of ROUNDS){const ms=seriesArr.filter(s=>s.round===r.id);if(!ms.length)continue;
+    html+=`<div class="round"><h2>${r.label}</h2><div class="line"></div></div>`+ms.map(serieCard).join('');}}
+  v.innerHTML=html;
+  const inp=$('#nameInp');
+  inp.onchange=async()=>{currentName=inp.value.trim();const me=predsArr.find(p=>p.nameKey===nameKey(currentName));myPicks=me?me.picks:{};renderPred();if(!PLACEHOLDER)refreshAll();};
+  if(wasName){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  v.querySelectorAll('.scorein:not([disabled])').forEach(el=>el.onchange=()=>setScoreInput(el.dataset.s,el.dataset.f,el.dataset.side,el.value));
+  v.querySelectorAll('.adv:not([disabled])').forEach(b=>b.onclick=async()=>{if(await savePick(b.dataset.s,'advance',b.dataset.adv))renderPred();});
+  v.querySelectorAll('.champ-opt:not([disabled])').forEach(b=>b.onclick=async()=>{if(await saveChampion(b.dataset.champ))renderPred();});
+}
+
+/* ---------- TABLA ---------- */
+function scoreOf(picks){let score=0,hits=0,total=0;
+  for(const s of seriesArr){const p=picks?picks[s.id]:null;
+    ['ida','vuelta'].forEach(w=>{if(legHasResult(s,w)){total++;const pts=legPoints(p?p[w]:null,legActual(s,w));if(pts>0)hits++;score+=pts;}});
+    if(s.advances!=null){total++;if(p&&p.advance===s.advances){score+=PTS_AVANZA;hits++;}}}
+  if(config.champion){total++;const cp=picks?picks['__campeon']:null;if(cp&&cp===config.champion){score+=(Number(config.bonusCampeon)||5);hits++;}}
+  return{score,hits,total};}
+function renderTabla(){
+  const v=$('#view-tabla'); let resolved=0;
+  seriesArr.forEach(s=>{if(legHasResult(s,'ida'))resolved++;if(legHasResult(s,'vuelta'))resolved++;if(s.advances!=null)resolved++;});
+  if(config.champion)resolved++;
+  const rows=(predsArr||[]).filter(d=>d&&d.name).map(d=>({name:d.name,...scoreOf(d.picks)}));
+  rows.sort((a,b)=>b.score-a.score||b.hits-a.hits||a.name.localeCompare(b.name));
+  let html=`<p class="note" style="margin:0 0 12px">${resolved} resultado${resolved===1?'':'s'} cargado${resolved===1?'':'s'} · ${rows.length} participante${rows.length===1?'':'s'}
+    <button class="btn sm ghost" type="button" id="reload" style="margin-left:8px">Actualizar</button></p>`;
+  if(!rows.length){html+=`<div class="empty"><b>Sin participantes aún</b>Cuando alguien guarde sus pronósticos, aparecerá aquí.</div>`;v.innerHTML=html;$('#reload').onclick=refreshAll;return;}
+  html+=`<div class="lead"><div class="lrow head"><div>#</div><div>Participante</div><div style="text-align:right">Pts</div><div style="text-align:right">Aciertos</div></div>`;
+  rows.forEach((r,i)=>{const m=i<3?` m${i+1}`:'';html+=`<div class="lrow"><div class="rank${m}">${i+1}</div><div class="pname">${esc(r.name)}</div><div class="pscore">${r.score}</div><div class="phit">${r.hits}/${r.total}</div></div>`;});
+  html+=`</div>`; v.innerHTML=html; $('#reload').onclick=refreshAll;
+}
+
+/* ---------- ORGANIZADOR ---------- */
+function renderOrg(){
+  const v=$('#view-org');
+  if(PLACEHOLDER){v.innerHTML=`<div class="empty"><b>Conecta tu Google Sheet primero</b>Pega la URL de tu aplicación web (Apps Script) en el archivo para activar este panel.</div>`;return;}
+  if(isOrganizer){renderOrgPanel();return;}
+  if(!config.setup){
+    v.innerHTML=`<div class="panel"><h3>Crear la quiniela</h3>
+      <p class="note" style="margin-top:-4px">Eres el primero en entrar. Define una clave; con ella cargarás los resultados.</p>
+      <div style="margin-bottom:12px"><label class="fld">Nombre de la quiniela</label><input id="setTitle" value="${esc(config.title)}"></div>
+      <div class="row" style="margin-bottom:12px"><div><label class="fld">Clave</label><input id="setPw" type="password" placeholder="Clave secreta"></div>
+      <div><label class="fld">Repetir clave</label><input id="setPw2" type="password" placeholder="Otra vez"></div></div>
+      <button class="btn gold" type="button" id="doSetup">Crear quiniela</button>
+      <p class="note" id="setErr" style="color:#ef7f70;margin-bottom:0"></p></div>`;
+    $('#doSetup').onclick=async()=>{
+      const t=$('#setTitle').value.trim()||'Quiniela Liguilla',p=$('#setPw').value,p2=$('#setPw2').value;
+      if(p.length<3){$('#setErr').textContent='La clave debe tener al menos 3 caracteres.';return;}
+      if(p!==p2){$('#setErr').textContent='Las claves no coinciden.';return;}
+      const res=await apiPost({route:'setup',title:t,pw:p});
+      if(res&&res.ok===false){$('#setErr').textContent=res.error||'No se pudo crear.';return;}
+      orgPw=p; isOrganizer=true; toast('¡Quiniela creada!'); await refreshAll(); renderOrg();
+    };
+    return;
+  }
+  v.innerHTML=`<div class="panel"><h3>Entrar como organizador</h3><label class="fld">Clave</label>
+    <input id="loginPw" type="password" placeholder="Tu clave">
+    <button class="btn gold" type="button" id="doLogin" style="margin-top:12px">Entrar</button>
+    <p class="note" id="loginErr" style="color:#ef7f70;margin-bottom:0"></p></div>`;
+  $('#loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#doLogin').click();});
+  $('#doLogin').onclick=async()=>{const h=await sha256($('#loginPw').value);if(h===config.pwHash){orgPw=$('#loginPw').value;isOrganizer=true;toast('Bienvenido');renderOrg();}else $('#loginErr').textContent='Clave incorrecta.';};
+}
+async function orgWrite(payload){
+  const res=await apiPost({...payload,pw:orgPw});
+  if(res&&res.ok===false){toast(res.error||'Error');return false;}
+  await refreshAll(); renderOrgPanel(); return true;
+}
+function renderOrgPanel(){
+  const v=$('#view-org');
+  const opts=ROUNDS.map(r=>`<option value="${r.id}">${r.label}</option>`).join('');
+  const sv=x=>x==null?'':x;
+  let list='';
+  for(const r of ROUNDS){const ms=seriesArr.filter(s=>s.round===r.id);if(!ms.length)continue;
+    list+=`<div class="round" style="margin:14px 0 8px"><h2 style="font-size:15px">${r.label}</h2><div class="line"></div></div>`;
+    list+=ms.map(s=>{
+      const advSeg=['A','B'].map(t=>`<button class="btn sm" type="button" data-act="adv" data-k="${t}" data-active="${s.advances===t?'1':'0'}" data-s="${s.id}">${esc(t==='A'?s.teamA:s.teamB)}</button>`).join('')+`<button class="btn sm ghost" type="button" data-act="adv" data-k="" data-s="${s.id}">Limpiar</button>`;
+      const edit = editId===s.id ? `<div class="editbox">
+          <div class="row" style="margin-bottom:8px"><div><label class="fld">Equipo A (cierra de local)</label><input id="edA_${s.id}" value="${esc(s.teamA)}"></div>
+          <div><label class="fld">Equipo B</label><input id="edB_${s.id}" value="${esc(s.teamB)}"></div></div>
+          <div class="seg"><button class="btn sm gold" type="button" data-act="savete" data-s="${s.id}">Guardar equipos</button>
+          <button class="btn sm" type="button" data-act="swap" data-s="${s.id}">Intercambiar localías</button></div>
+          <p class="note" style="margin:8px 0 0">Al guardar, la ida queda en casa de B y la vuelta en casa de A. Usa "Intercambiar localías" si el local de la ida es al revés.</p></div>` : '';
+      return `<div class="adminserie"><div class="am-t">${esc(s.teamA)} vs ${esc(s.teamB)}
+          <button class="btn sm ghost" type="button" data-act="ediar" data-s="${s.id}" style="float:right">${editId===s.id?'Cerrar':'Editar equipos'}</button></div>
+        ${edit}
+        <div class="am-leg"><div class="l">Ida — ${esc(s.idaHome)} (local) vs ${esc(s.idaAway)}</div>
+          <div class="scorerow"><span class="st-team">${esc(s.idaHome)}</span><input class="scoreinp" id="iH_${s.id}" type="number" min="0" inputmode="numeric" value="${sv(s.idaScoreH)}"><span class="dash">–</span><input class="scoreinp" id="iA_${s.id}" type="number" min="0" inputmode="numeric" value="${sv(s.idaScoreA)}"><span class="st-team">${esc(s.idaAway)}</span></div></div>
+        <div class="am-leg"><div class="l">Vuelta — ${esc(s.vueltaHome)} (local) vs ${esc(s.vueltaAway)}</div>
+          <div class="scorerow"><span class="st-team">${esc(s.vueltaHome)}</span><input class="scoreinp" id="vH_${s.id}" type="number" min="0" inputmode="numeric" value="${sv(s.vueltaScoreH)}"><span class="dash">–</span><input class="scoreinp" id="vA_${s.id}" type="number" min="0" inputmode="numeric" value="${sv(s.vueltaScoreA)}"><span class="st-team">${esc(s.vueltaAway)}</span></div></div>
+        <div class="seg" style="margin-top:6px"><button class="btn sm gold" type="button" data-act="savescore" data-s="${s.id}">Guardar marcadores</button><button class="btn sm ghost" type="button" data-act="clearscore" data-s="${s.id}">Limpiar marcadores</button></div>
+        <div class="am-leg"><div class="l">¿Quién avanza?</div><div class="seg">${advSeg}</div></div>
+        <div class="seg" style="margin-top:8px"><button class="btn sm" type="button" data-act="lock" data-s="${s.id}">${s.locked?'Reabrir':'Cerrar'} pronósticos</button>
+        <button class="btn sm danger" type="button" data-act="del" data-s="${s.id}">Borrar serie</button>
+        ${closedSerie(s)?'<span class="lockpill">Cerrada</span>':''}</div></div>`;
+    }).join('');}
+  if(!seriesArr.length)list=`<div class="empty" style="margin-top:8px"><b>No hay series</b>Agrega las semifinales o reinicia para recargar Cuartos.</div>`;
+
+  v.innerHTML=`
+    <div class="panel"><h3>Nombre de la quiniela</h3><div class="row"><input id="ttlInp" value="${esc(config.title)}"><button class="btn gold" type="button" id="saveTtl" style="flex:0 0 auto">Guardar</button></div></div>
+    <div class="panel"><h3>Bono del campeón</h3>
+      <div class="row" style="margin-bottom:10px">
+        <div style="flex:0 0 110px"><label class="fld">Puntos</label><input id="bonInp" type="number" min="0" value="${Number(config.bonusCampeon)||5}"></div>
+        <div><label class="fld">Campeón real</label><select id="champSel"><option value="">Sin definir</option>${champTeams().map(t=>`<option value="${esc(t)}" ${config.champion===t?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+      </div>
+      <div class="seg"><button class="btn gold sm" type="button" id="saveBon">Guardar bono y campeón</button>
+      <button class="btn sm" type="button" id="toggleChamp">${config.champLocked?'Reabrir':'Cerrar'} pronóstico de campeón</button></div>
+      <p class="note" style="margin-bottom:0">Cierra el pronóstico de campeón antes del primer partido. Define el "Campeón real" al terminar la final para repartir el bono.</p></div>
+    <div class="panel"><h3>Agregar serie (Semifinal / Final)</h3>
+      <div style="margin-bottom:10px"><label class="fld">Ronda</label><select id="adRound">${opts}</select></div>
+      <div class="row" style="margin-bottom:6px"><div><label class="fld">Equipo A (mejor posicionado, cierra de local)</label><input id="adA" placeholder="Mejor sembrado"></div>
+      <div><label class="fld">Equipo B</label><input id="adB" placeholder="El otro"></div></div>
+      <p class="note">Recuerda la siembra: el mejor posicionado de los que avanzan va contra el de menor posición, y cierra de local en la vuelta.</p>
+      <button class="btn gold" type="button" id="adBtn">Agregar serie</button></div>
+    <div class="panel"><h3>Series y resultados</h3>
+      <p class="note" style="margin-top:-4px">Escribe el marcador real de cada partido y marca quién avanza. Los puntos se reparten solos (2 por marcador exacto, 1 por acertar el resultado).</p>${list}</div>
+    <div class="panel"><h3>Cuenta</h3><div class="seg"><button class="btn sm" type="button" id="logout">Salir</button><button class="btn sm danger" type="button" id="resetAll">Reiniciar quiniela</button></div>
+      <p class="note" style="margin-bottom:0">Reiniciar borra resultados y pronósticos de todos y recarga los Cuartos. No se puede deshacer.</p></div>`;
+
+  $('#saveTtl').onclick=()=>orgWrite({route:'saveTitle',title:$('#ttlInp').value.trim()||'Quiniela Liguilla'}).then(ok=>{if(ok)toast('Nombre guardado');});
+  $('#saveBon').onclick=()=>orgWrite({route:'setConfig',fields:{bonusCampeon:Number($('#bonInp').value)||0,champion:$('#champSel').value}}).then(ok=>{if(ok)toast('Bono y campeón guardados');});
+  $('#toggleChamp').onclick=()=>orgWrite({route:'setConfig',fields:{champLocked:!config.champLocked}}).then(ok=>{if(ok)toast('Listo');});
+  $('#adBtn').onclick=()=>{const A=$('#adA').value.trim(),B=$('#adB').value.trim(),round=$('#adRound').value;if(!A||!B){toast('Escribe los dos equipos');return;}orgWrite({route:'addSerie',round,teamA:A,teamB:B}).then(ok=>{if(ok)toast('Serie agregada');});};
+  v.querySelectorAll('[data-act]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.s,act=b.dataset.act,s=seriesArr.find(x=>x.id===id);
+    if(act==='ediar'){editId=editId===id?null:id;renderOrgPanel();return;}
+    if(!s)return;
+    if(act==='savescore'){
+      const g=p=>{const val=$('#'+p+'_'+id).value.trim();return val===''?'':Math.max(0,parseInt(val,10)||0);};
+      await orgWrite({route:'setSerie',id,fields:{idaScoreH:g('iH'),idaScoreA:g('iA'),vueltaScoreH:g('vH'),vueltaScoreA:g('vA')}});toast('Marcadores guardados');}
+    else if(act==='clearscore'){await orgWrite({route:'setSerie',id,fields:{idaScoreH:'',idaScoreA:'',vueltaScoreH:'',vueltaScoreA:''}});toast('Marcadores limpiados');}
+    else if(act==='adv'){await orgWrite({route:'setSerie',id,fields:{advances:b.dataset.k===''?null:b.dataset.k}});}
+    else if(act==='lock'){await orgWrite({route:'setSerie',id,fields:{locked:!s.locked}});}
+    else if(act==='del'){if(confirm(`¿Borrar ${s.teamA} vs ${s.teamB}?`))await orgWrite({route:'deleteSerie',id});}
+    else if(act==='savete'){const A=$('#edA_'+id).value.trim(),B=$('#edB_'+id).value.trim();if(!A||!B){toast('Escribe los dos equipos');return;}
+      editId=null;await orgWrite({route:'setSerie',id,fields:{teamA:A,teamB:B,idaHome:B,idaAway:A,vueltaHome:A,vueltaAway:B}});toast('Equipos actualizados');}
+    else if(act==='swap'){await orgWrite({route:'setSerie',id,fields:{idaHome:s.vueltaHome,idaAway:s.vueltaAway,vueltaHome:s.idaHome,vueltaAway:s.idaAway}});toast('Localías intercambiadas');}
+  });
+  $('#logout').onclick=()=>{isOrganizer=false;orgPw='';renderOrg();};
+  $('#resetAll').onclick=async()=>{if(confirm('Esto borra TODOS los pronósticos y resultados de todos y recarga los Cuartos. ¿Continuar?')){await orgWrite({route:'reset'});toast('Quiniela reiniciada');}};
+}
+
+/* ---------- init ---------- */
+showBanner(); applyTitle();
+// El botón "Organizador" queda OCULTO. Se revela tocando el título 5 veces (o abriendo la URL con #org al final).
+const _orgTab=$('#t-org');
+_orgTab.style.display = ((location.hash||'').toLowerCase().indexOf('org')>=0) ? '' : 'none';
+let _taps=0,_tapT=null;
+$('#heroTitle').addEventListener('click',()=>{ _taps++; clearTimeout(_tapT); _tapT=setTimeout(()=>_taps=0,1500);
+  if(_taps>=5){ _taps=0; _orgTab.style.display=''; toast('Modo organizador desbloqueado'); setTab('org'); } });
+if(!PLACEHOLDER) refreshAll(); else { seriesArr=DEFAULTS.map(fullSerie); }
+setTab('pred');
+</script>
