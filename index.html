@@ -325,8 +325,16 @@ function renderPred(){
   inp.onchange=async()=>{currentName=inp.value.trim();const me=predsArr.find(p=>p.nameKey===nameKey(currentName));myPicks=me?me.picks:{};renderPred();if(!PLACEHOLDER)refreshAll();};
   if(wasName){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
   v.querySelectorAll('.scorein:not([disabled])').forEach(el=>el.onchange=()=>setScoreInput(el.dataset.s,el.dataset.f,el.dataset.side,el.value));
-  v.querySelectorAll('.adv:not([disabled])').forEach(b=>b.onclick=async()=>{if(await savePick(b.dataset.s,'advance',b.dataset.adv))renderPred();});
-  v.querySelectorAll('.champ-opt:not([disabled])').forEach(b=>b.onclick=async()=>{if(await saveChampion(b.dataset.champ))renderPred();});
+  v.querySelectorAll('.adv:not([disabled])').forEach(b=>b.onclick=()=>{
+    if(!currentName){toast('Escribe tu nombre primero');$('#nameInp')&&$('#nameInp').focus();return;}
+    myPicks[b.dataset.s]=myPicks[b.dataset.s]||{}; myPicks[b.dataset.s].advance=b.dataset.adv;
+    renderPred(); persistPicks();
+  });
+  v.querySelectorAll('.champ-opt:not([disabled])').forEach(b=>b.onclick=()=>{
+    if(!currentName){toast('Escribe tu nombre primero');$('#nameInp')&&$('#nameInp').focus();return;}
+    myPicks['__campeon']=b.dataset.champ;
+    renderPred(); persistPicks();
+  });
 }
 
 /* ---------- TABLA ---------- */
